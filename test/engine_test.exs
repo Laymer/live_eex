@@ -110,7 +110,7 @@ defmodule Phoenix.LiveView.EngineTest do
       assert static == ["foo", "bar", "baz"]
     end
 
-    test "contains comprehensions" do
+    test "contains optimized comprehensions" do
       template = """
       before
       <%= for point <- @points do %>
@@ -177,6 +177,25 @@ defmodule Phoenix.LiveView.EngineTest do
       assert changed(template, %{foo: 123}, nil) == ["123"]
       assert changed(template, %{foo: 123}, %{}) == [nil]
       assert changed(template, %{foo: 123}, %{foo: true}) == ["123"]
+    end
+
+    test "does not render dynamic if it has variables inside unoptimized comprehension" do
+      template = "<%= for foo <- @foo, do: foo %>"
+      assert changed(template, %{foo: [1, 2, 3]}, nil) == [[1, 2, 3]]
+      assert changed(template, %{foo: [1, 2, 3]}, %{}) == [nil]
+      assert changed(template, %{foo: [1, 2, 3]}, %{foo: true}) == [[1, 2, 3]]
+    end
+
+    test "does not render dynamic if it has variables inside optimized comprehension" do
+      template = "<%= for foo <- @foo do %><%= foo %><% end %>"
+
+      assert [%{dynamics: [["1"], ["2"], ["3"]]}] =
+               changed(template, %{foo: ["1", "2", "3"]}, nil)
+
+      assert [nil] = changed(template, %{foo: ["1", "2", "3"]}, %{})
+
+      assert [%{dynamics: [["1"], ["2"], ["3"]]}] =
+               changed(template, %{foo: ["1", "2", "3"]}, %{foo: true})
     end
 
     test "renders dynamic if it uses assigns" do
