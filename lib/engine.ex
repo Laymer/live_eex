@@ -244,7 +244,12 @@ defmodule Phoenix.LiveView.Engine do
 
   The list of dynamics is always a list of iodatas, as we
   only perform change tracking at the root and never inside
-  `case`, `cond`, `comprehensions`, etc.
+  `case`, `cond`, `comprehensions`, etc. Similarly,
+  comprehensions do not have fingerprints because they
+  are only optimized at the root, so conditional evaluation,
+  as the one seen in rendering, is not possible. The only
+  possible outcome for a dynamic field that returns a
+  comprehension is `nil`.
   """
 
   @behaviour Phoenix.Template.Engine
