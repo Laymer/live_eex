@@ -151,6 +151,11 @@ defmodule Phoenix.LiveView.EngineTest do
       assert changed(template, %{}, %{}) == [nil]
     end
 
+    test "renders dynamic if fingerprint does not match" do
+      assert changed("<%= @foo %>", %{foo: 123}, %{foo: true}, 123) == ["123"]
+      assert changed("<%= 1 + 2 %>", %{foo: 123}, %{}, 123) == ["3"]
+    end
+
     test "renders dynamic if it has a lexical form" do
       template = "<%= import List %><%= flatten(@foo) %>"
       assert changed(template, %{foo: '123'}, nil) == ["Elixir.List", '123']
@@ -291,7 +296,13 @@ defmodule Phoenix.LiveView.EngineTest do
   end
 
   defp changed(string, assigns, changed) do
-    %{dynamic: dynamic} = eval(string, Map.put(assigns, :__changed__, changed))
+    %{fingerprint: fingerprint} = eval(string, assigns)
+    changed(string, assigns, fingerprint, changed)
+  end
+
+  defp changed(string, assigns, fingerprint, changed) do
+    socket = %{root_fingerprint: fingerprint, changed: changed}
+    %{dynamic: dynamic} = eval(string, Map.put(assigns, :socket, socket))
     dynamic
   end
 

@@ -176,11 +176,13 @@ defmodule Phoenix.LiveView.Engine do
   ## Tracking changes
 
   By default, a `.leex` template does not track changes.
-  Change tracking can be enabled by passing a `:__changed__`
-  field as an assign with a map as value. The map should
+  Change tracking can be enabled by passing a `socket`
+  with two keys `:root_fingerprint` and `:changed`. If
+  the `:root_fingerprint` matches the template fingerprint,
+  then the `:changed` map is used. The map should
   contain the name of any changed field as key and the
   boolean true as value. If a field is not listed in
-  `:__changed__`, then it is always considered unchanged.
+  `:changed`, then it is always considered unchanged.
 
   If a field is unchanged and `.leex` believes a dynamic
   expression no longer needs to be computed, its value
@@ -315,7 +317,11 @@ defmodule Phoenix.LiveView.Engine do
 
     prelude =
       quote do
-        __changed__ = Map.get(var!(assigns), :__changed__, nil)
+        __changed__ =
+          case var!(assigns) do
+            %{socket: %{root_fingerprint: unquote(fingerprint), changed: changed}} -> changed
+            _ -> nil
+          end
       end
 
     rendered =
