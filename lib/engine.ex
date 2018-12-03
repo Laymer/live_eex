@@ -647,7 +647,7 @@ defmodule Phoenix.LiveView.Engine do
     |> Enum.map(fn assign ->
       quote do: unquote(__MODULE__).changed_assign?(__changed__, unquote(assign))
     end)
-    |> Enum.reduce(&{:and, [], [&1, &2]})
+    |> Enum.reduce(&{:or, [], [&1, &2]})
   end
 
   @doc false

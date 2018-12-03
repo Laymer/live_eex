@@ -145,6 +145,14 @@ defmodule Phoenix.LiveView.EngineTest do
       assert changed(template, %{foo: 123}, %{foo: true}) == ["123"]
     end
 
+    test "renders dynamic if any of the assigns change" do
+      template = "<%= @foo + @bar %>"
+      assert changed(template, %{foo: 123, bar: 456}, nil) == ["579"]
+      assert changed(template, %{foo: 123, bar: 456}, %{}) == [nil]
+      assert changed(template, %{foo: 123, bar: 456}, %{foo: true}) == ["579"]
+      assert changed(template, %{foo: 123, bar: 456}, %{bar: true}) == ["579"]
+    end
+
     test "does not render dynamic without assigns" do
       template = "<%= 1 + 2 %>"
       assert changed(template, %{}, nil) == ["3"]
